@@ -60,18 +60,16 @@ char* judgePlayer(char* inputPlayers)
     }
     return returnPlayers;
 }
-char judgeYN(char* s)
-{
-    char Y[] = "Y";  char y[] = "y";
-    char N[] = "N";  char n[] = "n";
+
+char judgeYN(char *s) {
     char ry = 'Y';
     char rn = 'N';
-    while (strcmp(s, Y) && strcmp(s, N) && strcmp(s, y) && strcmp(s, n)){
-        sprintf(str,"错误输入！购买请按Y，不购买请按N\n");
+    while (('y' != *s) && ('Y' != *s) && ('n' != *s) && ('N' != *s)) {
+        sprintf(str, "错误输入！购买请按Y（y），不购买请按N（n）");
         showMessage(str);
-        scanf("%s",s);
+        *s = getInput();    
     }
-    if (!(strcmp(s, Y) && strcmp(s, y))){
+    if ('y' == *s || 'Y' == *s) {
         return ry;
     } else {
         return rn;
@@ -88,53 +86,63 @@ void addRounds(GAME *g) {
     return;
 }
 
-// 切换玩家
-void nextIndex(GAME* g)
-{
-    addRounds(g);
-    int p = g->players[g->playerIndex].police_days;
-    int h = g->players[g->playerIndex].hospital_days;
-    int o = g->players[g->playerIndex].status;    //0为继续游戏
+void changePlayerStatus(GAME *g) {
+    
     char *name = NULL;
     name = (char*)calloc(9, sizeof(char));
     char *message = NULL;
     message = (char*)calloc(50, sizeof(char));
     
-    while (g->players[g->playerIndex].police_days || g->players[g->playerIndex].hospital_days || g->players[g->playerIndex].status)
-    {
-        switch (g->players[g->playerIndex].name) {
-            case 'Q':
-                sprintf(name, "%s", "钱夫人");
-                break;
-            case 'S':
-                sprintf(name, "%s", "孙小美");
-                break;
-            case 'J':
-                sprintf(name, "%s", "金贝贝");
-                break;
-            case 'A':
-                sprintf(name, "%s", "阿土伯");
-                break;
-        }
+    switch (g->players[g->playerIndex].name) {
+        case 'Q':
+            sprintf(name, "%s", "钱夫人");
+            break;
+        case 'S':
+            sprintf(name, "%s", "孙小美");
+            break;
+        case 'J':
+            sprintf(name, "%s", "金贝贝");
+            break;
+        case 'A':
+            sprintf(name, "%s", "阿土伯");
+            break;
+    }
         
-        if (g->players[g->playerIndex].hospital_days) {
-            g->players[g->playerIndex].hospital_days -= 1;
-            sprintf(message, "%s住院一天，剩余住院%d天", name, g->players[g->playerIndex].hospital_days);
-        }
+    if (g->players[g->playerIndex].hospital_days) {
+        g->players[g->playerIndex].hospital_days -= 1;
+        sprintf(message, "%s住院一天，剩余住院%d天", name, g->players[g->playerIndex].hospital_days);
+    }
         
-        if (g->players[g->playerIndex].police_days) {
-            g->players[g->playerIndex].police_days -= 1;
-            sprintf(message, "%s拘留一天，剩余拘留%d天", name, g->players[g->playerIndex].police_days);
-        }
-        
-        showMessage(message);
-        
-        addRounds(g);
-        sleep(1);
-        showMessage(" ");
+    if (g->players[g->playerIndex].police_days) {
+        g->players[g->playerIndex].police_days -= 1;
+        sprintf(message, "%s拘留一天，剩余拘留%d天", name, g->players[g->playerIndex].police_days);
     }
     
+    if (!g->players[g->playerIndex].status) {
+        showMessage(message);
+    }
+        
+    if(g->players[g->playerIndex].bless_days){
+        g->players[g->playerIndex].bless_days -=1;
+    }
+        
+    addRounds(g);
+    usleep(500000);
+    showMessage(" ");
     free(name);
     free(message);
+    return;
+}
+
+// 切换玩家
+void nextIndex(GAME* g) {
+    
+    addRounds(g);
+    
+    while (g->players[g->playerIndex].police_days || g->players[g->playerIndex].hospital_days || g->players[g->playerIndex].status) {
+        changePlayerStatus(g);
+    }
+    
+    drawMap(g);
     return;
 }

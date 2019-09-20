@@ -8,18 +8,20 @@
 #include "map.h"
 #include "judge.h"
 
-int main() {
-    
+int main(int argc, char **argv) {
+    termctl(argv[0]);
+    startAnimation();
     GAME g;
     char command[100];
     g.player_num = 0;
     g.playerIndex = 0;
-    if(!IS_DEBUG) {
+    signal(SIGINT, pleaseQuit);
+    if(!IS_DEBUG){
         char inputMoney[10];
         char c[10];
         int money = 10000;
         printf("设置玩家初始资金，范围1000～50000（默认10000）");
-        if (*gets(inputMoney) != '\n') {
+        if (*gets(inputMoney) != '\n'){
             money = atoi(inputMoney);
         }
         money = judgeMoney(money);
@@ -29,11 +31,9 @@ int main() {
         initMap(&g);
     }
     while (1) {
-        //scanf("%s", command);
         fgets(command, 100, stdin);
-        //strcpy(command, "Roll\n");
-        if(command_exec(CommandParser(command), &g)) {
-            drawMap(&g);
+        if(command_exec(CommandParser(command), &g)){
+            // drawMap(&g);
         }
     }
     return 0;

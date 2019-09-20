@@ -18,4 +18,8 @@ void getin_toolhouse(GAME*);
 
 //进入土地
 void getin_house(GAME *);
+
+// 获取读入的函数
+char getInput();
+
 #endif 

@@ -6,9 +6,11 @@
 #define RICHMAN_JUDGE_H
 
 #include "common.h"
+#include "building.h"
 
-int judgeMoney(int money);
-char* judgePlayer(char* );
+int judgeMoney(int);
+char* judgePlayer(char*);
 char judgeYN(char*);
-void nextIndex(GAME* g);
+void nextIndex(GAME*);
+void changePlayerStatus(GAME*);
 #endif //RICHMAN_JUDGE_H

@@ -25,13 +25,16 @@ void playerMove(GAME *g, int step, int flag) {
     }
     while (step) {
         step -= 1;
-        ++g->players[g->playerIndex].index;
+        g->players[g->playerIndex].index = (g->players[g->playerIndex].index + 1) % MAP_SIZE;
         //判断炸弹
         if(g->map.local[g->players[g->playerIndex].index].bomb){
-            getin_hospital(g);
             g->map.local[g->players[g->playerIndex].index].bomb = false;
+            getin_hospital(g);
+            // g->map.local[g->players[g->playerIndex].index].bomb = false;
             return;
         } else if (g->map.local[g->players[g->playerIndex].index].block){
+            g->players[g->playerIndex].index = (g->players[g->playerIndex].index - 1) % MAP_SIZE;
+            g->map.local[g->players[g->playerIndex].index].block = false;
             break;
         }
         drawMap(g);

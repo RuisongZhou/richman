@@ -15,5 +15,14 @@ void showQuery(GAME*);
 void showSystemMessage(char*);
 // 显示游戏回合数
 void showRound(int);
+// 显示帮助菜单
+void showHelp();
 
+void startAnimation();
+
+// 控制游戏终端
+void termctl(char *);
+
+// 控制键盘响应
+int set_disp_mode(int fd,int option);
 #endif

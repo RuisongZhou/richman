@@ -3,9 +3,28 @@
 //
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "initialize.h"
 #include "judge.h"
+#include "map.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <pthread.h>
+
+void pleaseQuit(int s) {
+    char *systemMessage = NULL;
+    systemMessage = (char *)calloc(20, sizeof(char));
+    systemMessage = "请输入命令Quit退出游戏";
+    showSystemMessage(systemMessage);
+    fflush(stdout);
+}
+
+void playMusic() {
+    
+    return;
+}
 
 void initialize(GAME *game_pointer,int money, char* c)
 {
@@ -77,4 +96,39 @@ void init_reset(GAME* g, char* P)
     g->rounds = 0;
     g->save_path = NULL;
     g->playerIndex = 0;
+}
+
+void quit() {
+    set_disp_mode(STDOUT_FILENO, 0);
+    int waitTime = 1;
+    char *systemMessage = NULL;
+    systemMessage = (char *)calloc(30, sizeof(char));
+    while (waitTime) {
+        sprintf(systemMessage, "\033[1;34m游戏即将在\033[1;31m%d\033[1;34m秒后退出", waitTime);
+        showSystemMessage(systemMessage);
+        sleep(1);
+        --waitTime;
+    }
+    printf("\033[0m");
+    printf("\033[?25h");
+    printf("\033[2J");
+    fflush(stdout);
+    set_disp_mode(STDOUT_FILENO, 1);
+    system("clear");
+}
+
+void changeStatusWithSetRounds(GAME *g, int rounds) {
+
+    int i, playerIndex;
+    while (rounds) {
+        playerIndex = g->playerIndex;
+        for (i = 0; i < g->player_num; ++i) {
+            if (!g->players[playerIndex].status) {
+                changePlayerStatus(g);
+            }
+            playerIndex = (playerIndex + 1) % g->player_num;
+        }
+        --rounds;
+    }
+    return;
 }

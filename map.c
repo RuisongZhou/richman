@@ -1,7 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include "map.h"
+#include "common.h"
+#include <termios.h>
+#include <errno.h>
 
 char gamesymbols[] = {START, SPACE, HOSPITAL, PRISON, GIFTHOUSE, MAGIC, TOOLHOUSE, MINERAL};
 
@@ -35,6 +40,60 @@ void showQuery(GAME*);
 void clearQuery();
 // 显示 round
 void showRound(int);
+// 游戏开启动画
+void startAnimation();
+
+int set_disp_mode(int fd,int option)  {
+    /* by yss: FD=STDOUT_FILENO
+                option=0可以禁止输入回显
+                option=1可以打开回显示
+                通过本函数和fflush的配合可以屏蔽键盘输入
+                */
+   int err;  
+   struct termios term;  
+   if(tcgetattr(fd,&term)==-1){  
+     perror("Cannot get the attribution of the terminal");  
+     return 1;  
+   }  
+   if(option)  
+        term.c_lflag|=ECHOFLAGS;  
+   else  
+        term.c_lflag &=~ECHOFLAGS;  
+   err=tcsetattr(fd,TCSAFLUSH,&term);  
+   if(err==-1 && err==EINTR){  
+        perror("Cannot set the attribution of the terminal");  
+        return 1;  
+   }  
+   return 0;  
+}  
+void startAnimation() {
+    set_disp_mode(STDOUT_FILENO, 0);
+    int x, y, maxX;
+    y = 0;
+    x = HEIGHT - 19;
+    while (x) {
+        clearBackground();
+        changeFontColor('B');
+        gotoXY(x, 0);
+        printf("██████╗ ██╗ ██████╗██╗  ██╗███╗   ███╗ █████╗ ███╗   ██\n██╔══██╗██║██╔════╝██║  ██║████╗ ████║██╔══██╗████╗  ██║\n██████╔╝██║██║     ███████║██╔████╔██║███████║██╔██╗ ██║\n██╔══██╗██║██║     ██╔══██║██║╚██╔╝██║██╔══██║██║╚██╗██║\n██║  ██║██║╚██████╗██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║\n╚═╝  ╚═╝╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝\n");
+        printf("\n                              _____       _             _ _       \n                             |____ |     | |           | (_)      \n  __ _ _ __ ___  _   _ _ __      / /  ___| |_ _   _  __| |_  ___  \n / _` | '__/ _ \\| | | | '_ \\     \\ \\ / __| __| | | |/ _` | |/ _ \\ \n| (_| | | | (_) | |_| | |_) |.___/ / \\__ \\ |_| |_| | (_| | | (_) |\n \\__, |_|  \\___/ \\__,_| .__/ \\____/  |___/\\__|\\__,_|\\__,_|_|\\___/ \n  __/ |               | |                                         \n |___/                |_|                                         \n");
+        usleep(20000);
+        --x;
+    }
+    sleep(1);
+    fflush(stdout);
+    clearBackground();
+    set_disp_mode(STDOUT_FILENO, 1);
+/*
+    x = WIDTH - 9;
+    while (x) {
+        gotoXY(x, y);
+        printf("\n                              _____       _             _ _       \n                             |____ |     | |           | (_)      \n  __ _ _ __ ___  _   _ _ __      / /  ___| |_ _   _  __| |_  ___  \n / _` | '__/ _ \\| | | | '_ \\     \\ \\ / __| __| | | |/ _` | |/ _ \\ \n| (_| | | | (_) | |_| | |_) |.___/ / \\__ \\ |_| |_| | (_| | | (_) |\n \\__, |_|  \\___/ \\__,_| .__/ \\____/  |___/\\__|\\__,_|\\__,_|_|\\___/ \n  __/ |               | |                                         \n |___/                |_|                                         \n");
+        usleep(20000);
+        clearBackground();
+        --x;
+    }*/
+}
 
 void initMap(GAME *g) {
     
@@ -58,6 +117,8 @@ void initMap(GAME *g) {
         }
         ++index;
     }
+    // startAnimation();
+    changeFontColor('X');
     gotoXY(MESSAGEX, MESSAGEY);
     printf(MESSAGE);
     gotoXY(SYSTEMMESSAGEX, SYSTEMMESSAGEY);
@@ -99,16 +160,18 @@ void drawMap(GAME *g) {
 
 void drawPlayer(GAME *g) {
     
-    int i;
+    int i, index;
+    index = g->playerIndex;
     for (i = 0; i < g->player_num; ++i) {
-        changeFontColor(g->players[i].name);
+        index = (index + 1) % g->player_num;
+        changeFontColor(g->players[index].name);
         int j;
-        for (j = 0; j < g->players[i].house_num; ++j) {
-            gotoXY(g->map.local[g->players[i].house_index[j]].x, g->map.local[g->players[i].house_index[j]].y);
-            printf("%d", g->map.local[g->players[i].house_index[j]].level);
+        for (j = 0; j < g->players[index].house_num; ++j) {
+            gotoXY(g->map.local[g->players[index].house_index[j]].x, g->map.local[g->players[index].house_index[j]].y);
+            printf("%d", g->map.local[g->players[index].house_index[j]].level);
         }
-        gotoXY(g->map.local[g->players[i].index].x, g->map.local[g->players[i].index].y);
-        printf("%c", g->players[i].name);
+        gotoXY(g->map.local[g->players[index].index].x, g->map.local[g->players[index].index].y);
+        printf("%c", g->players[index].name);
         changeFontColor('X');
     }
     clearInput(0);
@@ -126,23 +189,30 @@ void gotoXY(int x, int y) {
 
 void changeFontColor(char c) {
     
-    int color;
+    char *color = NULL;
+
+    color = (char*)calloc(8, sizeof(char));
+
     if (c == 'Q')
         // 设置红色前景 
-        color = 31;
+        sprintf(color, "%d", 31);
     else if (c == 'A')
         // 设置绿色前景 
-        color = 32;
+        sprintf(color, "%d", 32);
     else if (c == 'S')
         // 设置蓝色前景 
-        color = 34;
+        sprintf(color, "%d", 34);
     else if (c == 'J')
         // 设置棕色前景 
-        color = 33;
+        sprintf(color, "%d", 33);
+    else if (c == 'W') 
+        // 设置亮白色前景
+        sprintf(color, "%d;%d", 1, 37);
     else
         // 设置黑色前景 
-        color = 30;
-    printf("\033[%dm", color);
+        sprintf(color, "%d", 30);
+    printf("\033[%sm", color);
+    free(color);
     return;
 }
 
@@ -164,7 +234,7 @@ void changeBGColor(char c) {
 void clearBackground() {
     
     int i, j;
-    system("clear");
+    printf("\033[2J");
     changeBGColor('W');
     for (i = 0; i < HEIGHT; ++i) {
         for (j = 0; j < WIDTH; ++j) {
@@ -177,6 +247,9 @@ void clearBackground() {
 
 void clearInput(int i) {
     
+    if (IS_DEBUG) {
+        i += IS_DEBUG_NAME_LENGTH;
+    }
     gotoXY(INPUTX, i);
     for (; i < WIDTH; ++i) {
         printf(" ");
@@ -200,12 +273,18 @@ void showRound(int rounds) {
 
 void showMessage(char *message) {
 
+    int y;
     clearSystemMessage();
     clearMessage();
     gotoXY(MESSAGEX + 1, 0);
     printf("%s", message);
-    clearInput(INPUTY + 8);
-    gotoXY(INPUTX, INPUTY + 8);
+
+    y = INPUTY + 8;
+    clearInput(y);
+    if (IS_DEBUG) {
+        y += IS_DEBUG_NAME_LENGTH;
+    }
+    gotoXY(INPUTX, y);
     return;
 }
 
@@ -221,9 +300,11 @@ void showQuery(GAME *g) {
     gotoXY(QBLOCKX, QBLOCKY);
     printf("%s%d", QBLOCK, g->players[g->playerIndex].gift[1]);
     gotoXY(QROBOTX, QROBOTY);
-    printf("%s%d", QBOMB, g->players[g->playerIndex].gift[2]);
+    printf("%s%d", QROBOT, g->players[g->playerIndex].gift[2]);
     gotoXY(QBLESSX, QBLESSY);
     printf("%s%d", QBLESS, g->players[g->playerIndex].bless_days);
+    gotoXY(QINDEXX, QINDEXY);
+    printf("%s%d", QINDEX, g->players[g->playerIndex].index);
     return;
 }
 
@@ -271,19 +352,27 @@ void clearMessage() {
 
 void showSystemMessage(char *systemMessage) {
 
+    int y;
+
     clearSystemMessage();
-    gotoXY(SYSTEMMESSAGEX, SYSTEMMESSAGEY);
+    gotoXY(SYSTEMMESSAGEX, SYSTEMMESSAGEY + SYSTEMMESSAGELENGTH);
     printf("%s", systemMessage);
-    clearInput(INPUTY + 8);
-    gotoXY(INPUTX, INPUTY + 8);
+    y = INPUTY + 8;
+    clearInput(y);
+    if (IS_DEBUG) {
+        y += IS_DEBUG_NAME_LENGTH;
+    }
+    gotoXY(INPUTX, y);
     return;
 }
-
+void showHelp(){
+    return;
+}
 void clearSystemMessage() {
     
     gotoXY(SYSTEMMESSAGEX, SYSTEMMESSAGEY + SYSTEMMESSAGELENGTH);
     int i;
-    for (i = SYSTEMMESSAGEY + SYSTEMMESSAGELENGTH; i < HEIGHT; ++i) {
+    for (i = SYSTEMMESSAGEY + SYSTEMMESSAGELENGTH; i < WIDTH; ++i) {
         printf(" ");
     }
     return;
@@ -292,6 +381,10 @@ void clearSystemMessage() {
 void drawPlayerInput(GAME *g) {
 
     gotoXY(INPUTX, INPUTY);
+    changeFontColor('X');
+    if (IS_DEBUG) {
+        printf("管理员——");
+    }
     changeFontColor(g->players[g->playerIndex].name);
     switch (g->players[g->playerIndex].name) {
         case 'Q':
@@ -306,6 +399,8 @@ void drawPlayerInput(GAME *g) {
         case 'J':
             printf("金贝贝");
             break;
+        default:
+            printf("X X X");
     }
     changeFontColor('X');
     printf(INPUT);
@@ -319,4 +414,9 @@ void hideMouse() {
 
     printf("\033[?25l");
     return;
+}
+
+void termctl(char *command){
+    struct winsize w;
+    printf("\e[8;%d;%dt\n", HEIGHT, WIDTH);
 }

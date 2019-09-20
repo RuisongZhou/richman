@@ -12,12 +12,13 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define BUF_SIZE 512
-#define MAP_SIZE 70
-#define HOSPITAL_POS 14 //以下sleep时间待定
+#define BUF_SIZE            512
+#define MAP_SIZE            70
+#define PRISON_POS          28
+#define HOSPITAL_POS        14 //以下sleep时间待定
 #define SLEEP_TIME_HOSPITAL 3
-#define SLEEP_TIME_PRISON 2
-#define MAGIC_TIME 2
+#define SLEEP_TIME_PRISON   2
+#define MAGIC_TIME          2
 
 #define HOSPITAL 'H'    // hospital
 #define TOOLHOUSE 'T'        // tool house
@@ -35,29 +36,75 @@
 #define P_SXM 'S'       // 孙小美
 #define P_JBB 'J'       // 金贝贝
 
-#define IS_DEBUG 0
+#define IS_DEBUG                1
+#define IS_DEBUG_NAME           "管理员——"
+#define IS_DEBUG_NAME_LENGTH    7
 
-#define COMMAND_ROLL_INDEX 0
-#define COMMAND_DUMP_INDEX 1
-#define COMMAND_QUIT_INDEX 2
-#define COMMAND_RESET_INDEX 3
-#define COMMAND_STEP_INDEX 4
-#define COMMAND_PRESET_INDEX 5
+#define ECHOFLAGS (ECHO | ECHOE | ECHOK | ECHONL)  
 
+#define COMMAND_ROLL_INDEX      0
+#define COMMAND_DUMP_INDEX      1
+#define COMMAND_QUIT_INDEX      2
+#define COMMAND_RESET_INDEX     3
+#define COMMAND_STEP_INDEX      4
+#define COMMAND_PRESET_INDEX    5
+#define COMMAND_SELL_INDEX      6
+#define COMMAND_BLOCK_INDEX     7
+#define COMMAND_BOMB_INDEX      8
+#define COMMAND_ROBOT_INDEX     9
+#define COMMAND_QUERY_INDEX     10
+#define COMMAND_HELP_INDEX      11
 
-#define COMMAND_ROLL "Roll"
-#define COMMAND_DUMP "Dump"
-#define COMMAND_QUIT "Quit"
-#define COMMAND_RESET "Reset"
-#define COMMAND_STEP "Step"
-#define COMMAND_PRESET "Preset"
+#define COMMAND_ROLL "roll"
+#define COMMAND_DUMP "dump"
+#define COMMAND_QUIT "quit"
+#define COMMAND_RESET "reset"
+#define COMMAND_STEP "step"
+#define COMMAND_PRESET "preset"
+#define COMMAND_SELL "sell"
+#define COMMAND_BLOCK "block"
+#define COMMAND_BOMB "bomb"
+#define COMMAND_ROBOT "robot"
+#define COMMAND_QUERY "query"
+#define COMMAND_HELP "help"
 
 #define COMMAND_PRESET_SUBCOMMAND_PLAYER_INDEX 1
-#define COMMAND_PRESET_SUBCOMMAND_PLAYER "Player"
-
+#define COMMAND_PRESET_SUBCOMMAND_PLAYER "player"
+#define COMMAND_PRESET_SUBCOMMAND_WHERE_INDEX 2
+#define COMMAND_PRESET_SUBCOMMAND_WHERE "where"
+#define COMMAND_PRESET_SUBCOMMAND_FOND_INDEX 3
+#define COMMAND_PRESET_SUBCOMMAND_FOND "fond"
+#define COMMAND_PRESET_SUBCOMMAND_POINTS_INDEX 4
+#define COMMAND_PRESET_SUBCOMMAND_POINTS "points"
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK_INDEX 5
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK "block"
+#define COMMAND_PRESET_SUBCOMMAND_BOMB_INDEX 6
+#define COMMAND_PRESET_SUBCOMMAND_BOMB "bomb"
+#define COMMAND_PRESET_SUBCOMMAND_ROBOT_INDEX 7
+#define COMMAND_PRESET_SUBCOMMAND_ROBOT "robot"
+#define COMMAND_PRESET_SUBCOMMAND_HOSPITAL_INDEX 8
+#define COMMAND_PRESET_SUBCOMMAND_HOSPITAL "hospital"
+#define COMMAND_PRESET_SUBCOMMAND_PRISON_INDEX 9
+#define COMMAND_PRESET_SUBCOMMAND_PRISON "prison"
+#define COMMAND_PRESET_SUBCOMMAND_BOMB_OR_NOT_INDEX 10
+#define COMMAND_PRESET_SUBCOMMAND_BOMB_OR_NOT "bomb_or_not"
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK_OR_NOT_INDEX 11
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK_OR_NOT "block_or_not"
+#define COMMAND_PRESET_SUBCOMMAND_LOC_INDEX 12
+#define COMMAND_PRESET_SUBCOMMAND_LOC "loc"
+#define COMMAND_PRESET_SUBCOMMAND_BLESS_INDEX 13
+#define COMMAND_PRESET_SUBCOMMAND_BLESS "bless"
+#define COMMAND_PRESET_SUBCOMMAND_ROUNDS_INEDX 14
+#define COMMAND_PRESET_SUBCOMMAND_ROUNDS "rounds"
+#define COMMAND_PRESET_SUBCOMMAND_CLEAR_INDEX 15
+#define COMMAND_PRESET_SUBCOMMAND_CLEAR "clear"
+#define COMMAND_PRESET_SUBCOMMAND_IS_BANKRUPT_INDEX 16
+#define COMMAND_PRESET_SUBCOMMAND_IS_BANKRUPT "is_bankrupt"
+#define COMMAND_PRESET_SUBCOMMAND_NEXTPLAYER_INDEX 17
+#define COMMAND_PRESET_SUBCOMMAND_NEXTPLAYER "nextplayer"
 
 #define WIDTH 80
-#define HEIGHT 80
+#define HEIGHT 30
 
 #define INPUT                   "> "
 #define INPUTX                  9
@@ -77,31 +124,30 @@
 #define ROUNDLENGTH             6
 #define ROUNDCOLOR              'Q'
 
-// TODO: 显示历史记录模块，涉及：
-//                              需要在 GAME 添加一个char*[]用于记录
-//                              需要规定 Message 的高度
-#define HISTORYX 20
-#define HISTORYY 0
-#define HISTORY "History: "
+// 相对路径
+#define MUSIC   "./richmanMusic.mp3"
 
-#define QBOMBX 2
-#define QBOMBY 40
-#define QBOMB "持有炸弹数量："
+#define QBOMBX  2
+#define QBOMBY  40
+#define QBOMB   "持有炸弹数量："
 #define QMONEYX 0
 #define QMONEYY 40
-#define QMONEY "持有现金金额："
+#define QMONEY  "持有现金金额："
 #define QPOINTX 1
 #define QPOINTY 40
-#define QPOINT "持有礼品点数："
+#define QPOINT  "持有礼品点数："
 #define QBLOCKX 3
 #define QBLOCKY 40
-#define QBLOCK "持有障碍物数量："
+#define QBLOCK  "持有障碍物数量："
 #define QROBOTX 4
 #define QROBOTY 40
-#define QROBOT "持有机器娃娃数量："
+#define QROBOT  "持有机器娃娃数量："
 #define QBLESSX 5
 #define QBLESSY 40
-#define QBLESS "财神附身时间："
+#define QBLESS  "财神附身时间："
+#define QINDEXX 6
+#define QINDEXY 40
+#define QINDEX  "玩家当前位置："
 
 typedef struct location {
     int x, y; // 点的绘图点
