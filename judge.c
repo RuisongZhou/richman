@@ -10,6 +10,19 @@
 
 static char str[BUF_SIZE];
 
+void Input(char* s)
+{
+    if(!IS_DEBUG){
+        set_disp_mode(STDOUT_FILENO, 1);
+        fflush(stdout);
+    }
+    fgets(s, 10, stdin);
+    if(!IS_DEBUG){
+        set_disp_mode(STDOUT_FILENO, 0);
+        fflush(stdout);
+    }
+}
+
 int judgeMoney(int money)
 {
     char inputMoney[10];
@@ -17,8 +30,9 @@ int judgeMoney(int money)
         if (money == 0)
             return 10000;
         printf("输入错误！设置玩家初始资金，范围1000～50000（默认10000）");
-
-        gets(inputMoney);
+        Input(inputMoney);
+        //fgets(inputMoney, 10 ,stdin);
+        money = 0;
         if (inputMoney[0] != '\n'){
             money = atoi(inputMoney);
         }
@@ -33,25 +47,29 @@ char* judgePlayer(char* inputPlayers)
     char *returnPlayers;
     while (wrong){
         wrong = 0;
-        int length = strlen(inputPlayers);
+        int length = strlen(inputPlayers) -1;
+        inputPlayers[length] = '\0';
         int a[5] = {0};
         //printf("%d\n", length);
         if ( length < 2 || length > 4){
             printf("错误输入！请选择2～4位不重复玩家，输入编号即可（1、钱夫人；2、阿土伯；3、孙小美；4、金贝贝）");
             wrong = 1;
-            gets(inputPlayers);
+            //fgets(inputPlayers, 10, stdin);
+            Input(inputPlayers);
             continue;
         }
         returnPlayers = (char*)malloc((length+1)* sizeof(char));
         returnPlayers[0] = '0'+length;
         for(int i = 0; i < length; i++){
             int numplayers = inputPlayers[i] - '0';
+            //ensure the difference of the players
             a[numplayers] +=1;
             //printf("%d\n", numplayers);
-            if (numplayers < 1 || numplayers > 4 || a[numplayers] >1 ){
+            if (numplayers < 1 || numplayers > 4 || a[numplayers] > 1 ){
                 printf("错误输入！请选择2～4位不重复玩家，输入编号即可（1、钱夫人；2、阿土伯；3、孙小美；4、金贝贝）");
                 wrong = 1;
-                gets(inputPlayers);
+                //fgets(inputPlayers,10,stdin);
+                Input(inputPlayers);
                 continue;
             } else {
                 returnPlayers[i+1] = '0' + numplayers;
@@ -67,7 +85,7 @@ char judgeYN(char *s) {
     while (('y' != *s) && ('Y' != *s) && ('n' != *s) && ('N' != *s)) {
         sprintf(str, "错误输入！购买请按Y（y），不购买请按N（n）");
         showMessage(str);
-        *s = getInput();    
+        *s = getInput();
     }
     if ('y' == *s || 'Y' == *s) {
         return ry;
@@ -77,7 +95,11 @@ char judgeYN(char *s) {
 }
 
 void addRounds(GAME *g) {
-    
+
+    if(g->players[g->playerIndex].bless_days){
+        g->players[g->playerIndex].bless_days -=1;
+    }
+
     g->playerIndex = (g->playerIndex + 1) % g->player_num;
     if (!g->playerIndex) {
         g->rounds += 1;
@@ -117,15 +139,28 @@ void changePlayerStatus(GAME *g) {
         g->players[g->playerIndex].police_days -= 1;
         sprintf(message, "%s拘留一天，剩余拘留%d天", name, g->players[g->playerIndex].police_days);
     }
-    
+
+    if (g->players[g->playerIndex].magic_time){
+        g->players[g->playerIndex].magic_time -=1;
+        sprintf(str,"玩家%c被诅咒!剩余%d回合\n", g->players[g->playerIndex].name, g->players[g->playerIndex].magic_time);
+        showMessage(str);
+        sleep(1);
+        int state = g->map.local[g->players[g->playerIndex].index].attr;
+        if (state == 1){
+            getin_house(g);
+            sleep(1);
+        } else if (state == 7){
+            int cost = g->map.local[g->players[g->playerIndex].index].cost;
+            g->players[g->playerIndex].point += cost;
+            sprintf(str,"玩家%c在矿地获得%d点数\n", g->players[g->playerIndex].name, cost);
+            showMessage(str);
+        }
+    }
+
     if (!g->players[g->playerIndex].status) {
         showMessage(message);
-    }
-        
-    if(g->players[g->playerIndex].bless_days){
-        g->players[g->playerIndex].bless_days -=1;
-    }
-        
+    }    
+            
     addRounds(g);
     usleep(500000);
     showMessage(" ");
@@ -139,7 +174,8 @@ void nextIndex(GAME* g) {
     
     addRounds(g);
     
-    while (g->players[g->playerIndex].police_days || g->players[g->playerIndex].hospital_days || g->players[g->playerIndex].status) {
+    while (g->players[g->playerIndex].police_days || g->players[g->playerIndex].hospital_days || g->players[g->playerIndex].status ||
+    g->players[g->playerIndex].magic_time) {
         changePlayerStatus(g);
     }
     

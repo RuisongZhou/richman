@@ -31,7 +31,7 @@ int str2int(char *str, int *target){
 
     if(str[0]=='-'){
         minus = -1;
-        str++;
+        ++str;
     }
 
     for(int i=0; i<strlen(str); i++){
@@ -101,6 +101,10 @@ void GetCommandIndex(Command *command, char **command_input){
                 command->params[0] = COMMAND_HELP_INDEX;
                 return;
             }
+            if(strcmp(convert_to_low_case(command_input[0]), COMMAND_SHOW_ME_THE_MONEY) == 0){
+                command->params[0] = COMMAND_SHOW_ME_THE_MONEY_INDEX;
+                return;
+            }
             command->length = -1;
             return;
         }
@@ -108,7 +112,7 @@ void GetCommandIndex(Command *command, char **command_input){
             /* process level two command */
 
             /* STEP COMMAND PARSER */
-            if(strcmp(convert_to_low_case(command_input[0]), COMMAND_STEP) == 0 && IS_DEBUG){
+            if(strcmp(convert_to_low_case(command_input[0]), COMMAND_STEP) == 0){
                 command->params[0] = COMMAND_STEP_INDEX;
                 if(str2int(command_input[1], (command->params+1))==0){
                     command->length = -1;
@@ -377,8 +381,8 @@ void GetCommandIndex(Command *command, char **command_input){
                         command->length = -1;
                         return;
                     }
-                    if(command->params[3]<-10 || command->params[3]>10){
-                        showSystemMessage("fond should between [-10,10].");
+                    if(command->params[3]<0 || command->params[3]>69){
+                        showSystemMessage("loc should between [0,69].");
                         command->length = -1;
                         return;
                     }
@@ -388,10 +392,10 @@ void GetCommandIndex(Command *command, char **command_input){
                     }
                     return;
                 }
-                if(strcmp(convert_to_low_case(command_input[1]), COMMAND_PRESET_SUBCOMMAND_FOND) == 0){
+                if(strcmp(convert_to_low_case(command_input[1]), COMMAND_PRESET_SUBCOMMAND_FUND) == 0){
                     if(IS_DEBUG)
-                        showSystemMessage("preset fond command catched.");
-                    command->params[1] = COMMAND_PRESET_SUBCOMMAND_FOND_INDEX;
+                        showSystemMessage("preset fund command catched.");
+                    command->params[1] = COMMAND_PRESET_SUBCOMMAND_FUND_INDEX;
 
                     if(strlen(command_input[2])!=1){
                         showSystemMessage("please only on roles.");
@@ -408,12 +412,12 @@ void GetCommandIndex(Command *command, char **command_input){
                     }
 
                     if(str2int(command_input[3], &(command->params[3]))){
-                        if(command->params[3]<1000 || command->params[3]>10000){
-                            showSystemMessage("[1000, 10000].");
+                        if(command->params[3]<0 || command->params[3]>50000){
+                            showSystemMessage("[0, 50000].");
                             command->length = -1;
                             return;
                         }
-                        showSystemMessage("preset fond command success.");
+                        showSystemMessage("preset fund command success.");
                         return;
                     }
                 }

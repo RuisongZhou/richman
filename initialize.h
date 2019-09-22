@@ -9,7 +9,7 @@
 
 void initialize(GAME *game_pointer, int money, char*);
 void init_map(MAP_INFOMATION *map);
-void init_player(PLAYER *player, int id, int money);
+void init_player(PLAYER *player, int id, int money, char symbol);
 void init_reset(GAME *g, char *);
 // 关闭ctrl+c
 void pleaseQuit(int);

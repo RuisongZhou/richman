@@ -60,7 +60,7 @@ bool updateHouse(GAME* g)
     PLAYER *p = &(g->players[g->playerIndex]);
     LOCATION *loc = &(g->map.local[p->index]);
     if(loc->attr == 1){
-        int cash = loc->cost * (loc->level+1);
+        int cash = loc->cost;
         if(p->money < cash) {
             return false;
         }
@@ -76,30 +76,21 @@ bool updateHouse(GAME* g)
     by  郭一兴
     function：支付租金
 */
-bool payfees(GAME* g)
-{
-    PLAYER *player_pay = &(g->players[g->playerIndex]);
-    LOCATION *loc = &(g->map.local[player_pay->index]);
-    PLAYER *player_receive = NULL;
-    int i;
-    for(i=0;i<4;i++){
-        if(loc->belong==g->players[i].id){
-            player_receive = &(g->players[i]);
-            break;
-        }
+bool payfees(GAME* g) {
+    int i, tenant, host, cost;
+
+    tenant = g->playerIndex;
+    host = g->map.local[g->players[g->playerIndex].index].belong - 1;
+    
+    cost = (g->map.local[g->players[tenant].index].level + 1) * g->map.local[g->players[tenant].index].cost / 2;
+
+    if (g->players[tenant].money - cost >= 0) {
+        g->players[host].money += cost;
+        g->players[tenant].money -= cost;
+        return 1;
     }
-    if(loc->attr == 1){
-        int cash = (loc->cost) * (loc->level+1) / 2;
-        player_pay->money -= cash;
-        player_receive->money += cash;
-        if(player_pay->money <= 0){
-            bankrupt(g);
-            return false;
-        }
-        return true;
-    } else {
-        return false;
-    }
+
+    return 0;
 }
 
 /*
@@ -191,18 +182,28 @@ bool setRobot(GAME *g)
 void bankrupt(GAME *g){
     int i;
     PLAYER *p = &(g->players[g->playerIndex]);
-    int money = p->money;
-    // p->point = 0;
-    // p->hospital_days = 0;
-    // p->police_days = 0;
+    //int money = p->money;
+    p->point = 0;
+    p->hospital_days = 0;
+    p->police_days = 0;
 
-    // for(i=0;i<4;i++)
-    //     p->gift[i]=0;
+    for(i=0;i<4;i++)
+        p->gift[i]=0;
     while(p->house_num>0){
         sellHouse(g,p->house_index[p->house_num-1]);
     }
-    p->money = money;
+    p->money = 0;
     p->status = 1;
-    g->player_less_num --;
+    g->player_less_num -= 1;
+    nextIndex(g);
+    if (g->player_less_num == 1) {
+        gameOver();
+    }
 }
 
+// 游戏结束逻辑
+void gameOver() {
+    showGameOver();
+    quit();
+    exit(0);
+}

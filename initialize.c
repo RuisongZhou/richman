@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <pthread.h>
 
 void pleaseQuit(int s) {
     char *systemMessage = NULL;
@@ -22,32 +21,39 @@ void pleaseQuit(int s) {
 }
 
 void playMusic() {
-    
-    return;
+    //system("nohup mplayer -playlist ./music/music.lst -loop 0");
+    system("./auplay/test");
 }
 
-void initialize(GAME *game_pointer,int money, char* c)
+void initialize(GAME *game_pointer, int money, char* c)
 {
     char *P;
+    if (!IS_DEBUG){
+//        pthread_create(&(game_pointer->music), NULL, (void *)&playMusic, NULL);
+ //       pthread_detach(game_pointer->music);
+    }
     P = judgePlayer(c);
     printf("%s",P);
     int num = P[0]-'0';
     game_pointer->player_num = num;
-    for ( int i = 1; i <= num; i++){
-        init_player(&(game_pointer->players[i-1]),P[i]-'0',money);
+    game_pointer->player_less_num = num;
+    for ( int i = 0; i < 4; i++){
+        game_pointer->players[i].status = 1;
     }
-    game_pointer->rounds = 0;
+    for ( int i = 1; i <= num; i++){
+        init_player(&(game_pointer->players[i-1]), i, money, P[i]);
+    }
     game_pointer->save_path =  (char*)"./result.txt";
     game_pointer->playerIndex = 0;
     free(P);
 }
 
 
-void init_player(PLAYER *player, int id, int money)
+void init_player(PLAYER *player, int id, int money, char symbol)
 {
     player->id = id;
     player->index = 0;
-    switch (id)
+    switch (symbol-'0')
     {
         case 1:
             //strcpy(player->name ,P_QFR);
@@ -71,7 +77,9 @@ void init_player(PLAYER *player, int id, int money)
     player->house_num = 0;
     player->hospital_days = 0;
     player->police_days = 0;
+    player->magic_time = 0;
     player->bless_days = 0;
+    player->magic_time = 0;
     player->status = 0;
     player->index = 0;
     for (int i = 0; i < 3; i++)
@@ -86,21 +94,26 @@ void init_player(PLAYER *player, int id, int money)
 void init_reset(GAME* g, char* P)
 {
     g->playerIndex = 0;
-    g->player_num = 0;
     int num = P[0]-'0';
     g->player_num = num;
-    for ( int i = 1; i <= num; i++){
-        init_player(&(g->players[i-1]),P[i]-'0',0);
-        g->players[i-1].point = 0;
+    g->player_less_num = num;
+    for ( int i = 0; i < 4; i++){
+        g->players[i].status = 1;
     }
-    g->rounds = 0;
-    g->save_path = NULL;
+    for ( int i = 1; i <= num; i++){
+        init_player(&(g->players[i-1]), i, 10000, P[i]);
+        g->players[i-1].point = 200;
+    }
+    g->rounds = 1;
+    g->save_path = "./result.txt";
     g->playerIndex = 0;
 }
 
 void quit() {
+    if(IS_DEBUG)
+        return;
     set_disp_mode(STDOUT_FILENO, 0);
-    int waitTime = 1;
+    int waitTime = 3;
     char *systemMessage = NULL;
     systemMessage = (char *)calloc(30, sizeof(char));
     while (waitTime) {
@@ -109,12 +122,12 @@ void quit() {
         sleep(1);
         --waitTime;
     }
+    endAnimation();
+    set_disp_mode(STDOUT_FILENO, 1);
     printf("\033[0m");
     printf("\033[?25h");
     printf("\033[2J");
     fflush(stdout);
-    set_disp_mode(STDOUT_FILENO, 1);
-    system("clear");
 }
 
 void changeStatusWithSetRounds(GAME *g, int rounds) {

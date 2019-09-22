@@ -64,6 +64,7 @@ bool debug_dump(GAME *g)
     fprintf(fp,"bomb:%d\n",player.gift[0]);
     fprintf(fp,"robot:%d\n",player.gift[2]);
 
+    level0_l = level1_l = level2_l = level3_l = 0;
     for(j=0;j<player.house_num;j++){
       int index = player.house_index[j];
       switch(g->map.local[index].level){
@@ -126,10 +127,30 @@ bool debug_dump(GAME *g)
     fprintf(fp,"prison_cnt:%d\n",player.police_days);
     fprintf(fp,"bless_cnt:%d\n",player.bless_days);
     fprintf(fp,"hospital_cnt:%d\n",player.hospital_days);
+	fprintf(fp,"stop_cnt:%d\n",player.magic_time);
     fprintf(fp,"is_bankrupt:%d\n",player.status);
   }
 
   fclose(fp);
 
   return true;
+}
+
+int save_archieve(GAME *g){
+  FILE *fp = fopen(".arch", "wb");
+  if(fp==NULL){
+    printf("save to archieve success.");
+    exit(0);
+  }
+
+  // fprintf(fp, "%d\n", g->player_less_num);
+  // fprintf(fp, "%d\n", g->player_num);
+  // fprintf(fp, "%d\n", g->playerIndex);
+  // fprintf(fp, "%s\n", g->save_path);
+  // fprintf(fp, "%d\n", g->rounds);
+  /* save game struct finished */
+
+  fwrite(g, sizeof(*g), 1, fp);
+  fclose(fp);
+  return 1;
 }

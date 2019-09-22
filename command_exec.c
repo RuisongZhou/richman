@@ -33,11 +33,13 @@ int command_exec(Command *cmd, GAME *g)
           break;
       }
       case COMMAND_QUIT_INDEX:{
+          save_archieve(g);
           quit();
-          exit(-1);
+          exit(0);
       }
       case COMMAND_RESET_INDEX:{
           initMap(g);
+          init_reset(g, "41234");
           showSystemMessage("reset handler.");
           break;
       }
@@ -56,22 +58,16 @@ int command_exec(Command *cmd, GAME *g)
       }
       case COMMAND_BLOCK_INDEX:{
           /* block n[-10, 10] */
-          set_block(cmd->params[1] ,g->players[g->playerIndex].index, g);
-          drawMap(g);
-          showSystemMessage("block exec success.");
+          set_block(cmd->params[1], g);
           break;
       }
       case COMMAND_BOMB_INDEX:{
-          set_bomb(cmd->params[1], g->players[g->playerIndex].index, g);
-          drawMap(g);
-          showSystemMessage("bomb exec success.");
+          set_bomb(cmd->params[1], g);
           break;
       }
       case COMMAND_ROBOT_INDEX:{
           /* robot */
-          set_robot(g->players[g->playerIndex].index, g);
-          drawMap(g);
-          showSystemMessage("robot exec success.");
+          set_robot(g);
           break;
       }
       case COMMAND_QUERY_INDEX:{
@@ -85,6 +81,13 @@ int command_exec(Command *cmd, GAME *g)
           showHelp();
           break;
       }
+      case COMMAND_SHOW_ME_THE_MONEY_INDEX:{
+          /* show_me_the_money */
+          int money = rand() / 32767.0 * 1000;
+          g->players[g->playerIndex].money += money;
+          showSystemMessage("作弊选手！");
+          break;
+      }
       case COMMAND_PRESET_INDEX:{
           switch(cmd->params[1]){
               case COMMAND_PRESET_SUBCOMMAND_PLAYER_INDEX:{
@@ -96,7 +99,7 @@ int command_exec(Command *cmd, GAME *g)
                       temp[i+1] = '0' + cmd->params[i+2];
                   }
                   init_reset(g, temp);
-                  showSystemMessage("command player handler.");
+                  showSystemMessage("preset player handler.");
                   drawMap(g);
                   break;
               }
@@ -108,15 +111,15 @@ int command_exec(Command *cmd, GAME *g)
                   showSystemMessage("preset where exec success.");
                   break;
               }
-              case COMMAND_PRESET_SUBCOMMAND_FOND_INDEX:{
-                  /* preset fond QASJ n */
+              case COMMAND_PRESET_SUBCOMMAND_FUND_INDEX:{
+                  /* preset fund QASJ n */
                   
                   g->players[name2id(cmd->params[2], g)].money = cmd->params[3];
-                  showSystemMessage("preset fond exec success.");
+                  showSystemMessage("preset fund exec success.");
                   break;
               }
               case COMMAND_PRESET_SUBCOMMAND_POINTS_INDEX:{
-                  /* preset fond QASJ n */
+                  /* preset fund QASJ n */
                   g->players[name2id(cmd->params[2], g)].point = cmd->params[3];
                   showSystemMessage("preset points exec success.");
                   break;
@@ -142,6 +145,7 @@ int command_exec(Command *cmd, GAME *g)
                   g->players[name2id(cmd->params[2], g)].hospital_days = cmd->params[3];
                   g->players[name2id(cmd->params[2], g)].police_days = 0;
                   g->players[name2id(cmd->params[2], g)].index = HOSPITAL_POS;
+                  nextIndex(g);
                   drawMap(g);
                   showSystemMessage("preset hospital exec success.");
                   break;
@@ -150,6 +154,7 @@ int command_exec(Command *cmd, GAME *g)
                   g->players[name2id(cmd->params[2], g)].police_days = cmd->params[3];
                   g->players[name2id(cmd->params[2], g)].hospital_days = 0;
                   g->players[name2id(cmd->params[2], g)].index = PRISON_POS;
+                  nextIndex(g);
                   drawMap(g);
                   showSystemMessage("preset prison exec success.");
                   break;
@@ -169,10 +174,12 @@ int command_exec(Command *cmd, GAME *g)
               }
               case COMMAND_PRESET_SUBCOMMAND_LOC_INDEX:{
                   /* preset loc WHERE QASJ LEVEL */
+                g->map.local[cmd->params[2]].belong = g->players[name2id(cmd->params[3], g)].id;
                   g->players[name2id(cmd->params[3], g)].house_num+=1;
                   g->players[name2id(cmd->params[3], g)].house_index[g->players[name2id(cmd->params[3], g)].house_num-1] = cmd->params[2];
                   g->map.local[cmd->params[2]].level = cmd->params[4];
                   showSystemMessage("preset loc exec success.");
+                  drawMap(g);
                   break;
               }
               case COMMAND_PRESET_SUBCOMMAND_BLESS_INDEX:{
@@ -198,11 +205,12 @@ int command_exec(Command *cmd, GAME *g)
                               break;
                           }
                       }
-                      g->players[g->map.local[cmd->params[2]].belong].house_num -= 1;
+                      g->players[g->map.local[cmd->params[2]].belong - 1].house_num -= 1;
                       g->map.local[cmd->params[2]].level = 0;
-                      g->map.local[cmd->params[2]].belong = 0;
+                      g->map.local[cmd->params[2]].belong = -1;
                       g->map.local[cmd->params[2]].block = 0;
                       g->map.local[cmd->params[2]].bomb = 0;
+                      drawMap(g);
                       showSystemMessage("preset clear command exec success.");
                       break;
                   }

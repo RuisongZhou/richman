@@ -17,6 +17,14 @@ int roll() {
 
 void playerMove(GAME *g, int step, int flag) {
 
+    if(!IS_DEBUG){
+        set_disp_mode(STDOUT_FILENO, 0);
+        fflush(stdout);
+    }
+    _Bool isBomb, isBlock;
+    isBomb = 0;
+    isBlock = 0;
+
     if (step > 6 || step < 0) {
         return;
     }
@@ -27,46 +35,54 @@ void playerMove(GAME *g, int step, int flag) {
         step -= 1;
         g->players[g->playerIndex].index = (g->players[g->playerIndex].index + 1) % MAP_SIZE;
         //判断炸弹
-        if(g->map.local[g->players[g->playerIndex].index].bomb){
-            g->map.local[g->players[g->playerIndex].index].bomb = false;
+        if (g->map.local[g->players[g->playerIndex].index].bomb){
+            g->map.local[g->players[g->playerIndex].index].bomb = 0;
+            clearBombOrBlock(g);
             getin_hospital(g);
-            // g->map.local[g->players[g->playerIndex].index].bomb = false;
-            return;
+            isBomb = 1;
         } else if (g->map.local[g->players[g->playerIndex].index].block){
-            g->players[g->playerIndex].index = (g->players[g->playerIndex].index - 1) % MAP_SIZE;
-            g->map.local[g->players[g->playerIndex].index].block = false;
-            break;
+            g->map.local[g->players[g->playerIndex].index].block = 0;
+            clearBombOrBlock(g);
+            isBlock = 1;
+        }
+        if (!IS_DEBUG) {
+            usleep(250000);
         }
         drawMap(g);
-        sleep(1);
-    }
-    //到达目的地，进行判断
-    int state = g->map.local[g->players[g->playerIndex].index].attr;
-    switch (state) {
-        case 1: //House
-            getin_house(g);
-            break;
-        case 3: //POLICE
-            getin_police(g);
-            break;
-        case 4: //GIFT
-            getin_gifthouse(g);
-            break;
-        case 5: //MAGICHOUSE
-            break;
-        case 6: //TOOLHOUSE
-            getin_toolhouse(g);
-            break;
-        case 7: //Mininal
-        {
-            int cost = g->map.local[g->players[g->playerIndex].index].cost;
-            g->players[g->playerIndex].point += cost;
-            sprintf(str,"玩家%c在矿地获得%d点数\n", g->players[g->playerIndex].name, cost);
-            showMessage(str);
+        if (isBomb || isBlock) {
             break;
         }
-        default:
-            break;
+    }
+    if (!isBomb) {
+        //到达目的地，进行判断
+        int state = g->map.local[g->players[g->playerIndex].index].attr;
+        switch (state) {
+            case 1: //House
+                getin_house(g);
+                break;
+            case 3: //POLICE
+                // getin_police(g); version2.0 delete polistation
+                break;
+            case 4: //GIFT
+                getin_gifthouse(g);
+                break;
+            case 5: //MAGICHOUSE
+                getin_magic_house(g);
+                break;
+            case 6: //TOOLHOUSE
+                getin_toolhouse(g);
+                break;
+            case 7: //Mininal
+            {
+                int cost = g->map.local[g->players[g->playerIndex].index].cost;
+                g->players[g->playerIndex].point += cost;
+                sprintf(str,"玩家%c在矿地获得%d点数\n", g->players[g->playerIndex].name, cost);
+                showMessage(str);
+                break;
+            }
+            default:
+                break;
+        }
     }
     nextIndex(g);
 }

@@ -11,34 +11,38 @@
 #include <string.h>
 #include <stdbool.h>
 #include <string.h>
+#include <pthread.h>
 
 #define BUF_SIZE            512
 #define MAP_SIZE            70
-#define PRISON_POS          28
+#define PRISON_POS          49
 #define HOSPITAL_POS        14 //以下sleep时间待定
 #define SLEEP_TIME_HOSPITAL 3
 #define SLEEP_TIME_PRISON   2
 #define MAGIC_TIME          2
 
-#define HOSPITAL 'H'    // hospital
-#define TOOLHOUSE 'T'        // tool house
-#define SPACE '0'       // space
-#define GIFTHOUSE 'G'        // gift house
-#define MAGIC 'M'       // magic house
-#define PRISON 'P'      // prison
-#define MINERAL '$'     // mineral area
-#define START 'S'       // start area
-#define ROADBLOCK '#'
-#define BOMB '@'
+//#define HOSPITAL    'H'     // hospital
+#define HOSPITAL    'P'     // hospital was changed to park
+#define TOOLHOUSE   'T'     // tool house
+#define SPACE       '0'     // space
+#define GIFTHOUSE   'G'     // gift house
+#define MAGIC       'M'     // magic house
+#define PRISON      'P'     // prison
+#define MINERAL     '$'     // mineral area
+#define START       'S'     // start area
+#define ROADBLOCK   '#'
+#define BOMB        '@'
 
 #define P_QFR 'Q'       // 钱夫人
 #define P_ATB 'A'       // 阿土伯
 #define P_SXM 'S'       // 孙小美
 #define P_JBB 'J'       // 金贝贝
 
-#define IS_DEBUG                1
+// IS_DEBUG 0 表示正常游戏模式，1 表示debug模式
+// #define IS_DEBUG                1
+int IS_DEBUG;
 #define IS_DEBUG_NAME           "管理员——"
-#define IS_DEBUG_NAME_LENGTH    7
+#define IS_DEBUG_NAME_LENGTH    8
 
 #define ECHOFLAGS (ECHO | ECHOE | ECHOK | ECHONL)  
 
@@ -55,56 +59,62 @@
 #define COMMAND_QUERY_INDEX     10
 #define COMMAND_HELP_INDEX      11
 
-#define COMMAND_ROLL "roll"
-#define COMMAND_DUMP "dump"
-#define COMMAND_QUIT "quit"
-#define COMMAND_RESET "reset"
-#define COMMAND_STEP "step"
-#define COMMAND_PRESET "preset"
-#define COMMAND_SELL "sell"
-#define COMMAND_BLOCK "block"
-#define COMMAND_BOMB "bomb"
-#define COMMAND_ROBOT "robot"
-#define COMMAND_QUERY "query"
-#define COMMAND_HELP "help"
+#define COMMAND_SHOW_ME_THE_MONEY_INDEX 12
+#define COMMAND_BLACK_SHEEP_WALL_INDEX 13
 
-#define COMMAND_PRESET_SUBCOMMAND_PLAYER_INDEX 1
-#define COMMAND_PRESET_SUBCOMMAND_PLAYER "player"
-#define COMMAND_PRESET_SUBCOMMAND_WHERE_INDEX 2
-#define COMMAND_PRESET_SUBCOMMAND_WHERE "where"
-#define COMMAND_PRESET_SUBCOMMAND_FOND_INDEX 3
-#define COMMAND_PRESET_SUBCOMMAND_FOND "fond"
-#define COMMAND_PRESET_SUBCOMMAND_POINTS_INDEX 4
-#define COMMAND_PRESET_SUBCOMMAND_POINTS "points"
-#define COMMAND_PRESET_SUBCOMMAND_BLOCK_INDEX 5
-#define COMMAND_PRESET_SUBCOMMAND_BLOCK "block"
-#define COMMAND_PRESET_SUBCOMMAND_BOMB_INDEX 6
-#define COMMAND_PRESET_SUBCOMMAND_BOMB "bomb"
-#define COMMAND_PRESET_SUBCOMMAND_ROBOT_INDEX 7
-#define COMMAND_PRESET_SUBCOMMAND_ROBOT "robot"
-#define COMMAND_PRESET_SUBCOMMAND_HOSPITAL_INDEX 8
-#define COMMAND_PRESET_SUBCOMMAND_HOSPITAL "hospital"
-#define COMMAND_PRESET_SUBCOMMAND_PRISON_INDEX 9
-#define COMMAND_PRESET_SUBCOMMAND_PRISON "prison"
-#define COMMAND_PRESET_SUBCOMMAND_BOMB_OR_NOT_INDEX 10
-#define COMMAND_PRESET_SUBCOMMAND_BOMB_OR_NOT "bomb_or_not"
-#define COMMAND_PRESET_SUBCOMMAND_BLOCK_OR_NOT_INDEX 11
-#define COMMAND_PRESET_SUBCOMMAND_BLOCK_OR_NOT "block_or_not"
-#define COMMAND_PRESET_SUBCOMMAND_LOC_INDEX 12
-#define COMMAND_PRESET_SUBCOMMAND_LOC "loc"
-#define COMMAND_PRESET_SUBCOMMAND_BLESS_INDEX 13
-#define COMMAND_PRESET_SUBCOMMAND_BLESS "bless"
-#define COMMAND_PRESET_SUBCOMMAND_ROUNDS_INEDX 14
-#define COMMAND_PRESET_SUBCOMMAND_ROUNDS "rounds"
-#define COMMAND_PRESET_SUBCOMMAND_CLEAR_INDEX 15
-#define COMMAND_PRESET_SUBCOMMAND_CLEAR "clear"
-#define COMMAND_PRESET_SUBCOMMAND_IS_BANKRUPT_INDEX 16
-#define COMMAND_PRESET_SUBCOMMAND_IS_BANKRUPT "is_bankrupt"
-#define COMMAND_PRESET_SUBCOMMAND_NEXTPLAYER_INDEX 17
-#define COMMAND_PRESET_SUBCOMMAND_NEXTPLAYER "nextplayer"
+#define COMMAND_ROLL    "roll"
+#define COMMAND_DUMP    "dump"
+#define COMMAND_QUIT    "quit"
+#define COMMAND_RESET   "reset"
+#define COMMAND_STEP    "step"
+#define COMMAND_PRESET  "preset"
+#define COMMAND_SELL    "sell"
+#define COMMAND_BLOCK   "block"
+#define COMMAND_BOMB    "bomb_delete" /* has been deleted by Mrs.Hu */
+#define COMMAND_ROBOT   "robot"
+#define COMMAND_QUERY   "query"
+#define COMMAND_HELP    "help"
 
-#define WIDTH 80
-#define HEIGHT 30
+#define COMMAND_SHOW_ME_THE_MONEY "show_me_the_money"
+#define COMMAND_BLACK_SHEEP_WALL "black_sheep_wall"
+
+#define COMMAND_PRESET_SUBCOMMAND_PLAYER_INDEX          1
+#define COMMAND_PRESET_SUBCOMMAND_PLAYER                "players"
+#define COMMAND_PRESET_SUBCOMMAND_WHERE_INDEX           2
+#define COMMAND_PRESET_SUBCOMMAND_WHERE                 "where"
+#define COMMAND_PRESET_SUBCOMMAND_FUND_INDEX            3
+#define COMMAND_PRESET_SUBCOMMAND_FUND                  "fund"
+#define COMMAND_PRESET_SUBCOMMAND_POINTS_INDEX          4
+#define COMMAND_PRESET_SUBCOMMAND_POINTS                "points"
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK_INDEX           5
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK                 "block"
+#define COMMAND_PRESET_SUBCOMMAND_BOMB_INDEX            6
+#define COMMAND_PRESET_SUBCOMMAND_BOMB                  "bomb_delete" /* has been deleted by Mrs.Hu */
+#define COMMAND_PRESET_SUBCOMMAND_ROBOT_INDEX           7
+#define COMMAND_PRESET_SUBCOMMAND_ROBOT                 "robot"
+#define COMMAND_PRESET_SUBCOMMAND_HOSPITAL_INDEX        8
+#define COMMAND_PRESET_SUBCOMMAND_HOSPITAL              "hospital_delete" /* has been deleted by Mrs.Hu */
+#define COMMAND_PRESET_SUBCOMMAND_PRISON_INDEX          9
+#define COMMAND_PRESET_SUBCOMMAND_PRISON                "presion_delete" /* has been deleted by Mrs.Hu */
+#define COMMAND_PRESET_SUBCOMMAND_BOMB_OR_NOT_INDEX     10
+#define COMMAND_PRESET_SUBCOMMAND_BOMB_OR_NOT           "bomb_or_not_delete" /* has been deleted by Mrs.Hu */
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK_OR_NOT_INDEX    11
+#define COMMAND_PRESET_SUBCOMMAND_BLOCK_OR_NOT          "block_or_not"
+#define COMMAND_PRESET_SUBCOMMAND_LOC_INDEX             12
+#define COMMAND_PRESET_SUBCOMMAND_LOC                   "loc"
+#define COMMAND_PRESET_SUBCOMMAND_BLESS_INDEX           13
+#define COMMAND_PRESET_SUBCOMMAND_BLESS                 "bless"
+#define COMMAND_PRESET_SUBCOMMAND_ROUNDS_INEDX          14
+#define COMMAND_PRESET_SUBCOMMAND_ROUNDS                "rounds"
+#define COMMAND_PRESET_SUBCOMMAND_CLEAR_INDEX           15
+#define COMMAND_PRESET_SUBCOMMAND_CLEAR                 "clear"
+#define COMMAND_PRESET_SUBCOMMAND_IS_BANKRUPT_INDEX     16
+#define COMMAND_PRESET_SUBCOMMAND_IS_BANKRUPT           "is_bankrupt"
+#define COMMAND_PRESET_SUBCOMMAND_NEXTPLAYER_INDEX      17
+#define COMMAND_PRESET_SUBCOMMAND_NEXTPLAYER            "nextplayer"
+
+#define WIDTH 90
+#define HEIGHT 35
 
 #define INPUT                   "> "
 #define INPUTX                  9
@@ -125,7 +135,12 @@
 #define ROUNDCOLOR              'Q'
 
 // 相对路径
-#define MUSIC   "./richmanMusic.mp3"
+#define GAMEMUSIC   "./music/梦幻伊甸园.mp3"
+#define STARTMUSIC  "./music/新游戏.mp3"
+#define ENDMUSIC    "./music/新游戏.mp3"
+#define BREAKMUSIC  "./music/破产.mp3"
+
+#define ENDANIMATIONHEIGHT      130
 
 #define QBOMBX  2
 #define QBOMBY  40
@@ -147,7 +162,10 @@
 #define QBLESS  "财神附身时间："
 #define QINDEXX 6
 #define QINDEXY 40
-#define QINDEX  "玩家当前位置："
+#define QINDEX  "当前位置："
+#define QHOUSEX 7
+#define QHOUSEY 40
+#define QHOUSE  "拥有房产："
 
 typedef struct location {
     int x, y; // 点的绘图点
@@ -178,20 +196,23 @@ typedef struct player {
     int hospital_days; // 玩家住院时间
     int police_days; // 玩家拘留时间
     int bless_days; // 财神持续时间
+    int magic_time;  //魔法屋陷害天数
 }PLAYER;
 
 typedef struct game {
-    int player_less_num;  //当前剩下的玩家数
-    int player_num;  //游戏总玩家数
-    int playerIndex; // 目前玩家指针
-    PLAYER players[4];     //所有玩家指针
-    MAP_INFOMATION map;   //地图储存
-    char *save_path;    //dump储存路径
-    int rounds;     // 游戏轮数
+    int             player_less_num;//当前剩下的玩家数
+    int             player_num;     //游戏总玩家数
+    int             playerIndex;    // 目前玩家指针
+    PLAYER          players[4];     //所有玩家指针
+    MAP_INFOMATION  map;            //地图储存
+    char            *save_path;     //dump储存路径
+    int             rounds;         // 游戏轮数
+    pthread_t       music;          // 播放音频的线程
 }GAME;
 
 typedef struct command {
     int length;
     int *params;
 } Command;
+
 #endif //RICHMAN_STRUCT_H
