@@ -12,3 +12,6 @@ make
 ```bash
 ./rich.ext
 ```
+
+## author
+Yu Peng, Zhiyu Zhang, Ruisong Zhou, Shusheng Yang, Zhaochuan Peng, Yixing Guo, Ziqing Pan.
