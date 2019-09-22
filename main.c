@@ -10,6 +10,7 @@
 #include "unistd.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 int main(int argc, char **argv) {
     if(argc==1){

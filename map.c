@@ -7,6 +7,7 @@
 #include "common.h"
 #include <termios.h>
 #include <errno.h>
+#include <signal.h>
 
 char gamesymbols[] = {START, SPACE, HOSPITAL, PRISON, GIFTHOUSE, MAGIC, TOOLHOUSE, MINERAL};
 
