@@ -4,11 +4,13 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include "map.h"
+#include "initialize.h"
 #include "common.h"
 #include <termios.h>
 #include <errno.h>
+#include <signal.h>
 
-char gamesymbols[] = {START, SPACE, HOSPITAL, PRISON, GIFTHOUSE, MAGIC, TOOLHOUSE, MINERAL};
+char gamesymbols[] = {STARTSPACE, SPACE, HOSPITAL, PRISON, GIFTHOUSE, MAGIC, TOOLHOUSE, MINERAL};
 
 // 初始化显示模块以及地图的数值
 void initComponent(GAME*);
@@ -49,6 +51,10 @@ void endAnimation();
 void clearBombOrBlock(GAME*);
 // 显示游戏结束
 void showGameOver();
+// 游戏结束复位所有显示改动
+void ctrlC();
+// 将光标移动到放置道具出
+void moveToTools(GAME*, int);
 
 int set_disp_mode(int fd,int option)  {
     /* by yss: FD=STDOUT_FILENO
@@ -129,7 +135,6 @@ void initMap(GAME *g) {
         }
         ++index;
     }
-    // startAnimation();
     initComponent(g);
     fclose(fp);
     return;
@@ -146,6 +151,17 @@ void clearBombOrBlock(GAME *g) {
         gotoXY(g->map.local[mapIndex].x, g->map.local[mapIndex].y - 1);
     }
     printf(" ");
+    return;
+}
+
+void moveToTools(GAME *g, int i) {
+    if (g->map.local[i].x == 0) {
+        gotoXY(g->map.local[i].x + 1, g->map.local[i].y);
+    } else if (g->map.local[i].x == 7) {
+        gotoXY(g->map.local[i].x - 1, g->map.local[i].y);
+    } else if (g->map.local[i].y == 28) {
+        gotoXY(g->map.local[i].x, g->map.local[i].y - 1);
+    }
     return;
 }
 
@@ -170,13 +186,9 @@ void drawMap(GAME *g) {
             printf("%c", gamesymbols[g->map.local[i].attr]);
         }
         if (flag) {
-            if (g->map.local[i].x == 0) {
-                gotoXY(g->map.local[i].x + 1, g->map.local[i].y);
-            } else if (g->map.local[i].x == 7) {
-                gotoXY(g->map.local[i].x - 1, g->map.local[i].y);
-            } else if (g->map.local[i].y == 28) {
-                gotoXY(g->map.local[i].x, g->map.local[i].y - 1);
-            }
+            moveToTools(g, i);
+            printf(" ");
+            moveToTools(g, i);
         } else {
             gotoXY(g->map.local[i].x, g->map.local[i].y);
         }
@@ -189,6 +201,8 @@ void drawMap(GAME *g) {
         }
     }
     drawPlayer(g);
+    showMessage(" ");
+    showSystemMessage(" ");
     return;
 }
 
@@ -198,7 +212,7 @@ void drawPlayer(GAME *g) {
     index = g->playerIndex;
     for (i = 0; i < g->player_num; ++i) {
         index = (index + 1) % g->player_num;
-        if (g->players[index].status) {
+        if ((g->players[index].playerStatus)) {
             continue;
         }
         changeFontColor(g->players[index].name);
@@ -272,6 +286,7 @@ void clearBackground() {
     
     int i, j;
     printf("\033[2J");
+    changeFontColor('X');
     changeBGColor('W');
     for (i = 0; i < HEIGHT; ++i) {
         for (j = 0; j < WIDTH; ++j) {
@@ -285,7 +300,7 @@ void clearBackground() {
 
 void clearInput(int i) {
     
-    if (IS_DEBUG) {
+    if (RESET) {
         i += IS_DEBUG_NAME_LENGTH;
     }
     gotoXY(INPUTX, i);
@@ -320,7 +335,7 @@ void showMessage(char *message) {
     y = INPUTY + 8;
     changeFontColor('S');
     clearInput(y);
-    if (IS_DEBUG) {
+    if (RESET) {
         y += IS_DEBUG_NAME_LENGTH;
     }
     gotoXY(INPUTX, y);
@@ -329,6 +344,7 @@ void showMessage(char *message) {
 
 void showQuery(GAME *g) {
     
+    clearQuery();
     int y, x;
     x = -1;
     changeFontColor('X');
@@ -357,7 +373,7 @@ void showQuery(GAME *g) {
     y = INPUTY + 8;
     clearInput(y);
     changeFontColor('S');
-    if (IS_DEBUG) {
+    if (RESET) {
         y += IS_DEBUG_NAME_LENGTH;
     }
     gotoXY(INPUTX, y);
@@ -419,25 +435,26 @@ void showSystemMessage(char *systemMessage) {
 
     int y;
 
-    clearMessage();
     clearSystemMessage();
     gotoXY(SYSTEMMESSAGEX, SYSTEMMESSAGEY + SYSTEMMESSAGELENGTH);
     printf("%s", systemMessage);
     y = INPUTY + 8;
     clearInput(y);
     changeFontColor('S');
-    if (IS_DEBUG) {
+    if (RESET) {
         y += IS_DEBUG_NAME_LENGTH;
     }
     gotoXY(INPUTX, y);
     return;
 }
+
 void showHelp(){
     changeFontColor('X');
     char *str = "所有输入不区分大小写\nRoll\t掷骰子命令。行走1～6步，步数由随机算法产生\nSell n\t轮到玩家时，可出售自己的任意房产，出售价格为投资总成本的2\nBlock n\t玩家可将路障放置到离当前位置前后10步的任何位置，任一玩家经过路障，将被拦截。该道具一次有效\nRobot\t使用该道具，可清扫前方路面上10步内的任何其他道具，如炸弹、路障\nQuery\t显示自家资产\nHelp\t查看命令帮助\nQuit\t强制退出\n";
     showMessage(str);
     return;
 }
+
 void clearSystemMessage() {
     
     gotoXY(SYSTEMMESSAGEX, SYSTEMMESSAGEY + SYSTEMMESSAGELENGTH);
@@ -452,7 +469,7 @@ void drawPlayerInput(GAME *g) {
 
     gotoXY(INPUTX, INPUTY);
     changeFontColor('X');
-    if (IS_DEBUG) {
+    if (RESET) {
         printf("管理员——");
     }
     changeFontColor(g->players[g->playerIndex].name);
@@ -495,21 +512,21 @@ void endAnimation() {
 
     FILE *endText;
     int line, i;
-    char *str[ENDANIMATIONHEIGHT];
+    char str[ENDANIMATIONHEIGHT][100];
 
-    signal(SIGINT, NULL);
+    signal(SIGINT, ctrlC);
     line = 0;
     endText = fopen("./document/thank.txt", "r");
 
     set_disp_mode(STDOUT_FILENO, 0);
 
     while (line < ENDANIMATIONHEIGHT) {
-        str[line] = (char*)calloc(100, sizeof(char));
         fgets(str[line], 100, endText);
         ++line;
     }
 
     line = 0;
+    i = 0;
     changeFontColor('E');
     while (line < ENDANIMATIONHEIGHT - HEIGHT) {
         clearBackground();
@@ -520,30 +537,35 @@ void endAnimation() {
         usleep(200000);
     }
     sleep(1);
-    set_disp_mode(STDOUT_FILENO, 1);
     clearBackground();
+    fclose(endText);
 
     return;
 }
 
 void showGameOver() {
-    if(!IS_DEBUG){
-        int x, y;
-        FILE *fp;
-        char gameOver[1024];
-        fp = fopen("document/gameOver.txt", "r");
-        x = 2;
-        y = 2;
-        changeFontColor('G');
+    int x, y;
+    FILE *fp;
+    char gameOver[1024];
+    fp = fopen("document/gameOver.txt", "r");
+    x = 2;
+    y = 2;
+    changeFontColor('G');
 
-        while (x < 5) {
-            gotoXY(x, y);
-            fgets(gameOver, 1024, fp);
-            printf("%s", gameOver);
-            ++x;
-        }
-        fclose(fp);
-        return;
+    while (x < 5) {
+        gotoXY(x, y);
+        fgets(gameOver, 1024, fp);
+        printf("%s", gameOver);
+        ++x;
     }
+    fclose(fp);
     return;
+}
+
+void recover() {
+    printf("\033[?25h");
+    printf("\033[0m");
+    printf("\033[2J");   
+    gotoXY(0 ,0);
+    fflush(stdout);
 }

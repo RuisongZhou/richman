@@ -2,6 +2,8 @@
 #define RICHMAN_TOOLS_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "map.h"
 #include "common.h"
 

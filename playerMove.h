@@ -2,6 +2,7 @@
 #define RICHMAN_PLAYERMOVE_H
 
 #include "common.h"
+#include "action.h"
 #include "map.h"
 #include <time.h>
 #include "building.h"

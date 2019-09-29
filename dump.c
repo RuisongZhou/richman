@@ -128,7 +128,7 @@ bool debug_dump(GAME *g)
     fprintf(fp,"bless_cnt:%d\n",player.bless_days);
     fprintf(fp,"hospital_cnt:%d\n",player.hospital_days);
 	fprintf(fp,"stop_cnt:%d\n",player.magic_time);
-    fprintf(fp,"is_bankrupt:%d\n",player.status);
+    fprintf(fp,"is_bankrupt:%d\n",player.playerStatus);
   }
 
   fclose(fp);
@@ -139,7 +139,7 @@ bool debug_dump(GAME *g)
 int save_archieve(GAME *g){
   FILE *fp = fopen(".arch", "wb");
   if(fp==NULL){
-    printf("save to archieve success.");
+    printf("Error ==> fail to generate archieve file. please check your file system..");
     exit(0);
   }
 
@@ -149,7 +149,7 @@ int save_archieve(GAME *g){
   // fprintf(fp, "%s\n", g->save_path);
   // fprintf(fp, "%d\n", g->rounds);
   /* save game struct finished */
-
+    showSystemMessage("save to archieve success.");
   fwrite(g, sizeof(*g), 1, fp);
   fclose(fp);
   return 1;

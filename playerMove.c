@@ -17,10 +17,8 @@ int roll() {
 
 void playerMove(GAME *g, int step, int flag) {
 
-    if(!IS_DEBUG){
-        set_disp_mode(STDOUT_FILENO, 0);
-        fflush(stdout);
-    }
+    set_disp_mode(STDOUT_FILENO, 0);
+    fflush(stdout);
     _Bool isBomb, isBlock;
     isBomb = 0;
     isBlock = 0;
@@ -45,9 +43,7 @@ void playerMove(GAME *g, int step, int flag) {
             clearBombOrBlock(g);
             isBlock = 1;
         }
-        if (!IS_DEBUG) {
-            usleep(250000);
-        }
+        usleep(250000);
         drawMap(g);
         if (isBomb || isBlock) {
             break;
@@ -76,8 +72,9 @@ void playerMove(GAME *g, int step, int flag) {
             {
                 int cost = g->map.local[g->players[g->playerIndex].index].cost;
                 g->players[g->playerIndex].point += cost;
-                sprintf(str,"玩家%c在矿地获得%d点数\n", g->players[g->playerIndex].name, cost);
+                sprintf(str,"%s在矿地获得%d点数\n", getName(g->players[g->playerIndex].name), cost);
                 showMessage(str);
+                sleep(1);
                 break;
             }
             default:
@@ -85,4 +82,5 @@ void playerMove(GAME *g, int step, int flag) {
         }
     }
     nextIndex(g);
+    gameOver(g);
 }

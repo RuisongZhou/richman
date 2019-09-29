@@ -2,6 +2,7 @@
 // Created by 周瑞松 on 2019/9/14.
 //
 
+#include "building.h"
 #include "judge.h"
 #include "map.h"
 #include <stdio.h>
@@ -12,15 +13,11 @@ static char str[BUF_SIZE];
 
 void Input(char* s)
 {
-    if(!IS_DEBUG){
-        set_disp_mode(STDOUT_FILENO, 1);
-        fflush(stdout);
-    }
+    set_disp_mode(STDOUT_FILENO, 1);
+    fflush(stdout);
     fgets(s, 10, stdin);
-    if(!IS_DEBUG){
-        set_disp_mode(STDOUT_FILENO, 0);
-        fflush(stdout);
-    }
+    set_disp_mode(STDOUT_FILENO, 0);
+    fflush(stdout);
 }
 
 int judgeMoney(int money)
@@ -110,62 +107,42 @@ void addRounds(GAME *g) {
 
 void changePlayerStatus(GAME *g) {
     
-    char *name = NULL;
-    name = (char*)calloc(9, sizeof(char));
-    char *message = NULL;
-    message = (char*)calloc(50, sizeof(char));
-    
-    switch (g->players[g->playerIndex].name) {
-        case 'Q':
-            sprintf(name, "%s", "钱夫人");
-            break;
-        case 'S':
-            sprintf(name, "%s", "孙小美");
-            break;
-        case 'J':
-            sprintf(name, "%s", "金贝贝");
-            break;
-        case 'A':
-            sprintf(name, "%s", "阿土伯");
-            break;
-    }
+    if (!(g->players[g->playerIndex].playerStatus)) {
+        char *message = NULL;
+        message = (char*)calloc(50, sizeof(char));
         
-    if (g->players[g->playerIndex].hospital_days) {
-        g->players[g->playerIndex].hospital_days -= 1;
-        sprintf(message, "%s住院一天，剩余住院%d天", name, g->players[g->playerIndex].hospital_days);
-    }
-        
-    if (g->players[g->playerIndex].police_days) {
-        g->players[g->playerIndex].police_days -= 1;
-        sprintf(message, "%s拘留一天，剩余拘留%d天", name, g->players[g->playerIndex].police_days);
-    }
-
-    if (g->players[g->playerIndex].magic_time){
-        g->players[g->playerIndex].magic_time -=1;
-        sprintf(str,"玩家%c被诅咒!剩余%d回合\n", g->players[g->playerIndex].name, g->players[g->playerIndex].magic_time);
-        showMessage(str);
-        sleep(1);
-        int state = g->map.local[g->players[g->playerIndex].index].attr;
-        if (state == 1){
-            getin_house(g);
-            sleep(1);
-        } else if (state == 7){
-            int cost = g->map.local[g->players[g->playerIndex].index].cost;
-            g->players[g->playerIndex].point += cost;
-            sprintf(str,"玩家%c在矿地获得%d点数\n", g->players[g->playerIndex].name, cost);
-            showMessage(str);
+        if (g->players[g->playerIndex].hospital_days) {
+            g->players[g->playerIndex].hospital_days -= 1;
+            sprintf(message, "%s住院一天，剩余住院%d天", getName(g->players[g->playerIndex].name), g->players[g->playerIndex].hospital_days);
         }
-    }
+        
+        if (g->players[g->playerIndex].police_days) {
+            g->players[g->playerIndex].police_days -= 1;
+            sprintf(message, "%s拘留一天，剩余拘留%d天", getName(g->players[g->playerIndex].name), g->players[g->playerIndex].police_days);
+        }
 
-    if (!g->players[g->playerIndex].status) {
+        if (g->players[g->playerIndex].magic_time){
+            if (g->map.local[g->players[g->playerIndex].index].attr == 1){
+                getin_house(g);
+            } else if (g->map.local[g->players[g->playerIndex].index].attr == 7){
+                int cost = g->map.local[g->players[g->playerIndex].index].cost;
+                g->players[g->playerIndex].point += cost;
+                sprintf(str, "%s在矿地获得%d点数\n", getName(g->players[g->playerIndex].name), cost);
+                showMessage(str);
+            }
+            if (!(g->players[g->playerIndex].playerStatus)) {
+                sleep(1);
+                g->players[g->playerIndex].magic_time -= 1;
+                sprintf(message, "%s被诅咒!剩余%d回合\n", getName(g->players[g->playerIndex].name), g->players[g->playerIndex].magic_time);
+            }
+        }
         showMessage(message);
+        free(message);
+        sleep(1);
+        drawMap(g);
     }    
             
     addRounds(g);
-    usleep(500000);
-    showMessage(" ");
-    free(name);
-    free(message);
     return;
 }
 
@@ -173,12 +150,12 @@ void changePlayerStatus(GAME *g) {
 void nextIndex(GAME* g) {
     
     addRounds(g);
+    drawMap(g);
     
-    while (g->players[g->playerIndex].police_days || g->players[g->playerIndex].hospital_days || g->players[g->playerIndex].status ||
+    while (g->players[g->playerIndex].police_days || g->players[g->playerIndex].hospital_days || g->players[g->playerIndex].playerStatus ||
     g->players[g->playerIndex].magic_time) {
         changePlayerStatus(g);
     }
     
-    drawMap(g);
     return;
 }

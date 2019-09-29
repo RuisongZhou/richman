@@ -25,4 +25,7 @@ void getin_magic_house(GAME *);
 // 获取读入的函数
 char getInput();
 
+// 获取玩家名称
+char *getName(char);
+
 #endif 

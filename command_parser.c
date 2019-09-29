@@ -148,9 +148,9 @@ void GetCommandIndex(Command *command, char **command_input){
                 showSystemMessage("block catched.");
                 command->params[0] = COMMAND_BLOCK_INDEX;
 
-                if(str2int(command_input[1], &(command->params[1]))){
-                    if(command->params[1]<-10 || command->params[1]>10){
-                        showSystemMessage("[-10, 10].");
+                if (str2int(command_input[1], &(command->params[1]))){
+                    if (command->params[1] <- 10 || command->params[1] > 10 || command->params[1]==0){
+                        showSystemMessage("[-10, 0)U(0, 10].");
                         command->length = -1;
                         return;
                     }
@@ -741,7 +741,9 @@ Command *CommandParser(char *command_input){
     command->params = NULL;
 
     if(strlen(command_input)==0){
-        showSystemMessage("No command found!");
+        if (!START) {
+            showSystemMessage("No command found!");
+        }
         free(command);
         return NULL;
     }
@@ -762,9 +764,13 @@ Command *CommandParser(char *command_input){
 
     GetCommandIndex(command, split);
     if(command->length==-1){
-        showSystemMessage("command error.");
+        if (!START) {
+            showSystemMessage("command error.");
+        }
         free(command);
         return NULL;
     }
+    free(parse_result);
+    free(split);
     return command;
 }

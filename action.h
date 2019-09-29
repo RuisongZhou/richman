@@ -5,21 +5,21 @@
 #ifndef RICHMAN_ACTION_H
 #define RICHMAN_ACTION_H
 
-#include "map.h"
+#include "building.h"
 #include "common.h"
 #include "judge.h"
 #include "initialize.h"
 
-bool buyHouse(GAME*);
-bool sellHouse(GAME* , int);
-bool updateHouse(GAME* );
-bool payfees(GAME* );
-void bankrupt(GAME *g);
+_Bool buyHouse(GAME*);
+_Bool sellHouse(GAME*, int);
+_Bool updateHouse(GAME*);
+_Bool payfees(GAME*);
+void bankrupt(GAME*);
 
-bool getPoints(GAME*);
-bool setBomb(GAME *g, int dist);
-bool setBlock(GAME *g, int dist);
-bool setRobot(GAME *g);
-void gameOver();
+_Bool getPoints(GAME*);
+_Bool setBomb(GAME*, int);
+_Bool setBlock(GAME*, int);
+_Bool setRobot(GAME*);
+void gameOver(GAME*);
 
 #endif //RICHMAN_ACTION_H

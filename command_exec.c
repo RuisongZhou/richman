@@ -4,6 +4,9 @@
 #include "tools.h"
 #include "action.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 int name2id(char ch, GAME *g){
     int i;
     for(i=0; i<g->player_num; i++){
@@ -35,11 +38,12 @@ int command_exec(Command *cmd, GAME *g)
       case COMMAND_QUIT_INDEX:{
           save_archieve(g);
           quit();
-          exit(0);
+          break;
       }
       case COMMAND_RESET_INDEX:{
-          initMap(g);
+        RESET = 1;
           init_reset(g, "41234");
+        initMap(g);
           showSystemMessage("reset handler.");
           break;
       }
@@ -51,9 +55,13 @@ int command_exec(Command *cmd, GAME *g)
       }
       case COMMAND_SELL_INDEX:{
           /* sell n */
-          sellHouse(g, cmd->params[1]);
+          if (sellHouse(g, cmd->params[1])) {
+              showSystemMessage("sell exec success.");
+          } else {
+            showSystemMessage("sell exec Failure");
+          }
+          sleep(1);
           drawMap(g);
-          showSystemMessage("sell exec success.");
           break;
       }
       case COMMAND_BLOCK_INDEX:{
@@ -99,6 +107,7 @@ int command_exec(Command *cmd, GAME *g)
                       temp[i+1] = '0' + cmd->params[i+2];
                   }
                   init_reset(g, temp);
+                  free(temp);
                   showSystemMessage("preset player handler.");
                   drawMap(g);
                   break;
@@ -251,5 +260,6 @@ int command_exec(Command *cmd, GAME *g)
           showSystemMessage("unknown command.");
           break;
   }
+  free(cmd);
   return 0;
 }

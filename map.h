@@ -4,6 +4,7 @@
 #include "common.h"
 
 // 给map每个点初始化
+void clearBackground();
 void initMap(GAME*);
 void initComponent(GAME*);
 // 绘制地图以及玩家输入模块
@@ -30,5 +31,6 @@ void endAnimation();
 void clearBombOrBlock(GAME*);
 // 游戏胜利之后的显示
 void showGameOver();
+void recover();
 
 #endif

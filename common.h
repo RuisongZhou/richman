@@ -13,13 +13,17 @@
 #include <string.h>
 #include <pthread.h>
 
+#define false 0
+#define true  1
+
 #define BUF_SIZE            512
 #define MAP_SIZE            70
 #define PRISON_POS          49
 #define HOSPITAL_POS        14 //以下sleep时间待定
 #define SLEEP_TIME_HOSPITAL 3
-#define SLEEP_TIME_PRISON   2
+#define SLEEP_TIME_PRISON   3
 #define MAGIC_TIME          2
+#define BLESS_TIME          6
 
 //#define HOSPITAL    'H'     // hospital
 #define HOSPITAL    'P'     // hospital was changed to park
@@ -29,7 +33,7 @@
 #define MAGIC       'M'     // magic house
 #define PRISON      'P'     // prison
 #define MINERAL     '$'     // mineral area
-#define START       'S'     // start area
+#define STARTSPACE  'S'     // start area
 #define ROADBLOCK   '#'
 #define BOMB        '@'
 
@@ -40,7 +44,9 @@
 
 // IS_DEBUG 0 表示正常游戏模式，1 表示debug模式
 // #define IS_DEBUG                1
-int IS_DEBUG;
+int     IS_DEBUG;
+int     RESET;
+_Bool   START;          // 游戏刚开始时为1，其他任意时刻为0
 #define IS_DEBUG_NAME           "管理员——"
 #define IS_DEBUG_NAME_LENGTH    8
 
@@ -192,7 +198,7 @@ typedef struct player {
     int house_index[MAP_SIZE]; // 玩家所拥有的house的相对位置
     int house_num; // 玩家所拥有的house的数量
     int gift[3]; // 各种道具持有数量（桶）0-炸弹 1-路障 2-robot
-    bool status; // 玩家是否结束游戏（0:继续游戏，1:破产退出游戏）
+    _Bool playerStatus; // 玩家是否结束游戏（0:继续游戏，1:破产退出游戏）
     int hospital_days; // 玩家住院时间
     int police_days; // 玩家拘留时间
     int bless_days; // 财神持续时间

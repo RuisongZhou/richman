@@ -20,6 +20,11 @@ void pleaseQuit(int s) {
     fflush(stdout);
 }
 
+void ctrlC(int s) {
+    recover();
+    exit(0);
+}
+
 void playMusic() {
     //system("nohup mplayer -playlist ./music/music.lst -loop 0");
     system("./auplay/test");
@@ -28,17 +33,16 @@ void playMusic() {
 void initialize(GAME *game_pointer, int money, char* c)
 {
     char *P;
-    if (!IS_DEBUG){
-//        pthread_create(&(game_pointer->music), NULL, (void *)&playMusic, NULL);
- //       pthread_detach(game_pointer->music);
-    }
+    // TODO: 播放音频功能需要完善，无法流畅的播放音频
+//    pthread_create(&(game_pointer->music), NULL, (void *)&playMusic, NULL);
+//    pthread_detach(game_pointer->music);
     P = judgePlayer(c);
     printf("%s",P);
     int num = P[0]-'0';
     game_pointer->player_num = num;
     game_pointer->player_less_num = num;
     for ( int i = 0; i < 4; i++){
-        game_pointer->players[i].status = 1;
+        game_pointer->players[i].playerStatus = 1;
     }
     for ( int i = 1; i <= num; i++){
         init_player(&(game_pointer->players[i-1]), i, money, P[i]);
@@ -80,7 +84,7 @@ void init_player(PLAYER *player, int id, int money, char symbol)
     player->magic_time = 0;
     player->bless_days = 0;
     player->magic_time = 0;
-    player->status = 0;
+    player->playerStatus = 0;
     player->index = 0;
     for (int i = 0; i < 3; i++)
     {
@@ -98,7 +102,7 @@ void init_reset(GAME* g, char* P)
     g->player_num = num;
     g->player_less_num = num;
     for ( int i = 0; i < 4; i++){
-        g->players[i].status = 1;
+        g->players[i].playerStatus = 1;
     }
     for ( int i = 1; i <= num; i++){
         init_player(&(g->players[i-1]), i, 10000, P[i]);
@@ -110,38 +114,50 @@ void init_reset(GAME* g, char* P)
 }
 
 void quit() {
-    if(IS_DEBUG)
-        return;
     set_disp_mode(STDOUT_FILENO, 0);
     int waitTime = 3;
     char *systemMessage = NULL;
-    systemMessage = (char *)calloc(30, sizeof(char));
+    systemMessage = (char *)calloc(50, sizeof(char));
     while (waitTime) {
         sprintf(systemMessage, "\033[1;34m游戏即将在\033[1;31m%d\033[1;34m秒后退出", waitTime);
         showSystemMessage(systemMessage);
         sleep(1);
         --waitTime;
     }
+    free(systemMessage);
     endAnimation();
+    // TODO: 播放音频的关闭命令，但是有问题，暂时无法正常执行
+//    system("kill -9 `ps | grep test | awk 'NR==1{print $1}'`");
     set_disp_mode(STDOUT_FILENO, 1);
-    printf("\033[0m");
-    printf("\033[?25h");
-    printf("\033[2J");
-    fflush(stdout);
+    recover();
+    exit(0);
 }
 
 void changeStatusWithSetRounds(GAME *g, int rounds) {
 
     int i, playerIndex;
-    while (rounds) {
+    while (rounds != 1) {
         playerIndex = g->playerIndex;
         for (i = 0; i < g->player_num; ++i) {
-            if (!g->players[playerIndex].status) {
+            if (!g->players[playerIndex].playerStatus) {
                 changePlayerStatus(g);
             }
             playerIndex = (playerIndex + 1) % g->player_num;
         }
         --rounds;
+    }
+    return;
+}
+
+void resetPlayer(GAME *g) {
+
+    RESET = 1;
+    g->rounds = 1;
+    int i;
+    for (i = 0; i < 4; ++i) {
+        g->players[i].name = -1;
+        g->players[i].id = -1;
+
     }
     return;
 }
